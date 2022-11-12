@@ -1,0 +1,59 @@
+version: "3.3"
+services:
+  postgres:
+    image: postgres:13.3
+    container_name: service1
+    environment:
+      POSTGRES_DB: ${DB}
+      POSTGRES_USER: ${user}
+      POSTGRES_PASSWORD: ${password}
+    networks:
+      vlad_net:
+        ipv4_address: ${service1_host}
+
+  fill:
+    build: ./service2
+    image: datastock
+    container_name: service2
+    env_file:
+      - .env
+    volumes:
+      - db_data:/data
+    networks:
+      vlad_net:
+        ipv4_address: ${service2_host}
+    depends_on:
+      - postgres
+
+  web:
+    build: ./service3
+    image: flask-web
+    container_name: service3
+    env_file:
+      - .env
+    networks:
+      vlad_net:
+        ipv4_address: ${service3_host}
+    ports:
+      - "${web_port_external}:${web_port_internal}"
+    depends_on:
+      - fill
+
+networks:
+  vlad_net:
+    driver: macvlan
+    driver_opts:
+      parent: eth0
+    ipam:
+      driver: default
+      config:
+        - subnet: ${subnet}
+          gateway: ${gateway}
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+       o: bind
+       type: none
+       device: ${path_to_data}
