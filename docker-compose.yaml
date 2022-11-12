@@ -41,9 +41,7 @@ services:
 
 networks:
   vlad_net:
-    driver: macvlan
-    driver_opts:
-      parent: eth0
+    driver: bridge
     ipam:
       driver: default
       config:
